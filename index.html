@@ -20,8 +20,8 @@ button.sel{background:var(--ink);border-color:var(--ink);color:#fff}
 .foot{position:fixed;left:0;right:0;bottom:0;padding:8px 18px;font-size:12px;color:var(--mute);background:var(--paper);border-top:1px solid var(--line);display:flex;justify-content:space-between}
 </style></head><body><main id="app"></main><div class="foot"><span id="conn">…</span><span id="anon"></span></div>
 <script>
-var TOPIC="sv-53b8768d64bb3fe776",BASE="https://ntfy.sh/",ST={ph:"wait",r:0,lang:"en",res:null},me={a:null,b:null,role:null,s:{}},sent={},lastT=0;
-var uid;try{uid=localStorage.getItem("sv_id");if(!uid){uid=Math.random().toString(36).slice(2,10);localStorage.setItem("sv_id",uid);}var sv=JSON.parse(localStorage.getItem("sv_me")||"null");if(sv&&sv.topic===TOPIC)me=sv.me;}catch(e){uid=Math.random().toString(36).slice(2,10);}
+var TOPIC="sv-53b8768d64bb3fe776",BASE="https://ntfy.sh/",ST={ph:"wait",r:0,lang:"en",res:null},me={a:null,b:null,role:null,s:{},m:{}},sent={},lastT=0;
+var uid;try{uid=localStorage.getItem("sv_id");if(!uid){uid=Math.random().toString(36).slice(2,10);localStorage.setItem("sv_id",uid);}var sv=JSON.parse(localStorage.getItem("sv_me")||"null");if(sv&&sv.topic===TOPIC){me=sv.me;if(!me.m)me.m={};}}catch(e){uid=Math.random().toString(36).slice(2,10);}
 function save(){try{localStorage.setItem("sv_me",JSON.stringify({topic:TOPIC,me:me}));}catch(e){}}
 function L(en,de){return ST.lang==="de"?de:en;}
 function $(i){return document.getElementById(i);}
@@ -35,7 +35,7 @@ function draw(){var h="";
     h+='</div>'+stat("a")+'<h1 style="margin-top:26px">'+L("Everyone may now do what is best for them. Prices become …","Jeder darf jetzt tun, was für ihn am besten ist. Die Preise werden …")+'</h1>';
     [L("… better","… besser"),L("… about the same","… etwa gleich gut"),L("… worse","… schlechter")].forEach(function(t,i){h+='<button class="opt '+(me.b===i?"sel":"")+'" onclick="me.b='+i+';save();send(\'b\',{k:\'b\',v:'+i+'})">'+t+'</button>';});
     h+=stat("b");}
-  else if(ST.ph==="market"){h+='<div class="k">'+L("Seminar market","Seminarmarkt")+' · '+L("round","Runde")+' '+ST.r+'</div>';
+  else if(ST.ph==="market"){h+='<div class="k">'+L("Seminar market","Seminarmarkt")+' · '+L("round","Runde")+' '+ST.r+(ST.n&&ST.r<=ST.n?' / '+ST.n:'')+'</div>';
     if(me.role===null){h+='<h1>'+L("Which trader are you?","Welcher Trader bist du?")+'</h1><p class="m">'+L("Take the number on your card.","Nimm die Nummer von deiner Karte.")+'</p><div class="grid">';
       for(var j=0;j<10;j++)h+='<button onclick="me.role='+j+';save();draw()">T'+j+'</button>';h+='</div>';}
     else{var cur=me.s[ST.r]||null;
@@ -44,9 +44,12 @@ function draw(){var h="";
       [["F",L("Fundamental","Fundamental"),L("estimate the value from your coins","Wert aus deinen Münzen schätzen")],["P",L("Passive","Passiv"),L("flip a coin: buy or sell","Münze werfen: kaufen oder verkaufen")],["T",L("Follow the price","Dem Preis folgen"),L("buy if the price is above 5","kaufen, wenn der Preis über 5 liegt")]].forEach(function(o){
         h+='<button class="opt s'+o[0]+' '+(cur===o[0]?"sel":"")+'" onclick="me.s['+ST.r+']=\''+o[0]+'\';save();send(\'s\',{k:\'s\',r:'+ST.r+',role:'+me.role+',v:\''+o[0]+'\'})">'+o[0]+' · '+o[1]+'<small>'+o[2]+'</small></button>';});
       h+=(cur?stat("s"):"")+'<p class="m" style="margin-top:18px"><a href="#" onclick="me.role=null;save();draw();return false">'+L("change trader number","Trader-Nummer ändern")+'</a></p>';}}
+  else if(ST.ph==="min"){var mc=me.m[ST.r]||null;h+='<div class="k">'+L("Minority game","Minority Game")+' · '+L("round","Runde")+' '+ST.r+'</div><h1>'+L("Pick A or B. Whoever is in the minority wins.","A oder B. Wer in der Minderheit ist, gewinnt.")+'</h1>';
+    if(ST.res){var w=ST.res.a===ST.res.b?null:(ST.res.a<ST.res.b?"A":"B");h+='<div class="card"><div class="big">A '+ST.res.a+' · B '+ST.res.b+'</div><p>'+(w===null?L("A tie — nobody wins.","Gleichstand – niemand gewinnt."):(mc?(mc===w?'<span class="ok">'+L("You were in the minority. You win.","Du warst in der Minderheit. Gewonnen.")+'</span>':'<span class="err">'+L("You went with the herd.","Du bist mit der Herde gelaufen.")+'</span>'):L("Minority: ","Minderheit: ")+w))+'</p></div>';}
+    else{h+='<div class="grid" style="grid-template-columns:1fr 1fr">';["A","B"].forEach(function(k){h+='<button style="padding:34px 6px;font-size:34px" class="'+(mc===k?"sel":"")+'" onclick="me.m['+ST.r+']=\''+k+'\';save();send(\'m\',{k:\'m\',r:'+ST.r+',v:\''+k+'\'})">'+k+'</button>';});h+='</div>'+(mc?stat("m"):"");}}
   else{h+='<div class="k">'+L("Connected","Verbunden")+'</div><h1>'+L("Eyes on the screen. Your phone wakes up when it is your turn.","Blick nach vorn. Dein Handy meldet sich, wenn du dran bist.")+'</h1>';}
   $("app").innerHTML=h;$("anon").textContent=L("anonymous · no login","anonym · ohne Anmeldung");}
-function ctl(raw){try{var o=JSON.parse(raw);}catch(e){return;}if(!o||!o.ph||(o.t||0)<lastT)return;lastT=o.t||0;if(o.r!==ST.r)delete sent.s;ST=o;draw();}
+function ctl(raw){try{var o=JSON.parse(raw);}catch(e){return;}if(!o||!o.ph||(o.t||0)<lastT)return;lastT=o.t||0;if(o.r!==ST.r||o.ph!==ST.ph){delete sent.s;delete sent.m;}ST=o;draw();}
 function feed(line){try{var m=JSON.parse(line);if(m.event==="message")ctl(m.message);}catch(e){}}
 function catchUp(){return fetch(BASE+TOPIC+"c/json?poll=1&since=3h").then(function(r){return r.text();}).then(function(t){t.split("\n").forEach(function(l){if(l)feed(l);});}).catch(function(){});}
 function listen(){var es=new EventSource(BASE+TOPIC+"c/sse");es.onopen=function(){$("conn").textContent="● live";catchUp();};es.onmessage=function(e){feed(e.data);};es.onerror=function(){$("conn").textContent=L("○ reconnecting …","○ verbinde neu …");};}
