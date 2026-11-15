@@ -50,7 +50,9 @@ function draw(){var h="";
     else{h+='<div class="grid" style="grid-template-columns:1fr 1fr">';["A","B"].forEach(function(k){h+='<button style="padding:34px 6px;font-size:34px" class="'+(mc===k?"sel":"")+'" onclick="me.m['+ST.r+']=\''+k+'\';save();send(\'m\',{k:\'m\',r:'+ST.r+',v:\''+k+'\'})">'+k+'</button>';});h+='</div>'+(mc?stat("m"):"");}}
   else{h+='<div class="k">'+L("Connected","Verbunden")+'</div><h1>'+L("Eyes on the screen. Your phone wakes up when it is your turn.","Blick nach vorn. Dein Handy meldet sich, wenn du dran bist.")+'</h1>';}
   $("app").innerHTML=h;$("anon").textContent=L("anonymous · no login","anonym · ohne Anmeldung");}
-function ctl(raw){try{var o=JSON.parse(raw);}catch(e){return;}if(!o||!o.ph||(o.t||0)<lastT)return;lastT=o.t||0;if(o.r!==ST.r||o.ph!==ST.ph){delete sent.s;delete sent.m;}ST=o;draw();}
+function ctl(raw){try{var o=JSON.parse(raw);}catch(e){return;}if(!o||!o.ph||(o.t||0)<lastT||(o.t||0)>Date.now()+60000)return;lastT=o.t||0;
+  if(o.sess&&me.sess!==o.sess){me.sess=o.sess;me.s={};me.m={};save();sent={};}
+  if(o.r!==ST.r||o.ph!==ST.ph){delete sent.s;delete sent.m;}ST=o;draw();}
 function feed(line){try{var m=JSON.parse(line);if(m.event==="message")ctl(m.message);}catch(e){}}
 function catchUp(){return fetch(BASE+TOPIC+"c/json?poll=1&since=3h").then(function(r){return r.text();}).then(function(t){t.split("\n").forEach(function(l){if(l)feed(l);});}).catch(function(){});}
 function listen(){var es=new EventSource(BASE+TOPIC+"c/sse");es.onopen=function(){$("conn").textContent="● live";catchUp();};es.onmessage=function(e){feed(e.data);};es.onerror=function(){$("conn").textContent=L("○ reconnecting …","○ verbinde neu …");};}
